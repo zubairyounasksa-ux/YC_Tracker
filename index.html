@@ -500,7 +500,18 @@ function gasCall(action,params,onSuccess,onError){
     if(params.clientId)url.searchParams.set('clientId',params.clientId);
     if(params.data)url.searchParams.set('data',encodeURIComponent(JSON.stringify(params.data)));
     if(params.updates)url.searchParams.set('updates',encodeURIComponent(JSON.stringify(params.updates)));
-    fetch(url.toString()).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(onSuccess).catch(onError);
+    fetch(url.toString())
+      .then(r => r.text())
+      .then(text => {
+        try {
+          const data = JSON.parse(text);
+          onSuccess(data);
+        } catch(e) {
+          // GAS returned HTML (redirect page) instead of JSON
+          onError(new Error('Server returned non-JSON response'));
+        }
+      })
+      .catch(onError);
   }
 }
 
@@ -767,7 +778,7 @@ function gasCallNotif(action, params, cb) {
     const url = new URL(GAS_URL);
     url.searchParams.set('action', action);
     if(params.role) url.searchParams.set('role', params.role);
-    fetch(url.toString()).then(r=>r.json()).then(cb).catch(()=>cb({success:false,notifications:[],unread:0}));
+    fetch(url.toString()).then(r=>r.text()).then(t=>{try{cb(JSON.parse(t));}catch(e){cb({success:false,notifications:[],unread:0});}}).catch(()=>cb({success:false,notifications:[],unread:0}));
   }
 }
 
