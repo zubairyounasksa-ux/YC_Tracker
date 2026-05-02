@@ -684,7 +684,7 @@ function submitAddClient(){
   showLoader('Saving client…');
   gasCall('addRecord',{data:formData},res=>{
     hideLoader();
-    if(res.success){closeModal('addClientModal');showToast(res.message,'success');clearAddForm();loadDeptPage('account_opening');}
+    if(res.success){closeModal('addClientModal');showToast(res.message,'success');clearAddForm();loadDeptPage('account_opening');setTimeout(pollNotifications,2000);}
     else showToast(res.message,'error');
   });
 }
@@ -848,13 +848,20 @@ function markAllRead() {
 function startNotifPolling() {
   pollNotifications(); // immediate first poll
   if(notifPollTimer) clearInterval(notifPollTimer);
-  notifPollTimer = setInterval(pollNotifications, 45000); // every 45s
+  notifPollTimer = setInterval(pollNotifications, 20000); // every 20s // every 45s
 }
 
 function stopNotifPolling() {
   if(notifPollTimer) clearInterval(notifPollTimer);
   notifPollTimer = null;
 }
+
+/* POLL ON TAB FOCUS — re-poll when user switches back to this tab */
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible' && currentUser) {
+    pollNotifications();
+  }
+});
 
 /* AUTO-LOGIN — restores session on browser refresh */
 window.addEventListener('load',()=>{
