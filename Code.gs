@@ -37,10 +37,54 @@ const HEADERS = [
 ];
 
 // ─── WEB APP ENTRY POINT ──────────────────────────
-function doGet() {
+// Handles both: direct browser visits (serves HTML) AND
+// GitHub Pages frontend API calls (returns JSON)
+function doGet(e) {
+  const action = e && e.parameter && e.parameter.action;
+
+  // ── API mode: called from GitHub Pages via fetch() ──
+  if (action) {
+    return handleApiAction(action, e.parameter);
+  }
+
+  // ── HTML mode: direct Apps Script URL visit ──
   return HtmlService.createHtmlOutputFromFile('Index')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
     .setTitle('YC Brokerage Tracker');
+}
+
+// Routes action param → correct function, returns JSON
+function handleApiAction(action, p) {
+  let result;
+  try {
+    switch (action) {
+      case 'login':
+        result = login(p.email, p.password);
+        break;
+      case 'getRecords':
+        result = getRecords();
+        break;
+      case 'getStats':
+        result = getStats();
+        break;
+      case 'addRecord':
+        result = addRecord(JSON.parse(decodeURIComponent(p.data)));
+        break;
+      case 'updateRecord':
+        result = updateRecord(p.clientId, JSON.parse(decodeURIComponent(p.updates)));
+        break;
+      case 'deleteRecord':
+        result = deleteRecord(p.clientId);
+        break;
+      default:
+        result = { success: false, message: 'Unknown action: ' + action };
+    }
+  } catch (err) {
+    result = { success: false, message: err.message };
+  }
+  return ContentService
+    .createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 // ─── SHEET HELPER ─────────────────────────────────
