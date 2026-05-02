@@ -551,6 +551,57 @@ tbody td{padding:10px 14px;color:var(--text);vertical-align:middle;white-space:n
 //   CLIENT-SIDE JAVASCRIPT
 // ═══════════════════════════════════════════════════
 
+// ─── APPS SCRIPT API URL ───────────────────────────
+// This is your deployed Apps Script Web App URL.
+// The frontend calls it as a REST API from GitHub Pages.
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyNI6twiAIVK2kTdt0YTZJ_3qqR93dwXSk0UfUss6ds1_8nyalBmVVtVFD1z2xLFM1x/exec';
+
+// ─── UNIFIED API CALLER ────────────────────────────
+// All server calls go through here regardless of hosting.
+// Uses google.script.run when inside Apps Script,
+// or fetch() when hosted on GitHub Pages.
+const IS_GAS = (typeof google !== 'undefined' && google.script && google.script.run);
+
+function gasCall(action, params, onSuccess, onError) {
+  onError = onError || ((e) => { hideLoader(); showToast('Error: ' + (e.message || e), 'error'); });
+
+  if (IS_GAS) {
+    // ── Running inside Apps Script ──
+    let runner = google.script.run
+      .withSuccessHandler(onSuccess)
+      .withFailureHandler(onError);
+    switch (action) {
+      case 'login':       runner.login(params.email, params.password); break;
+      case 'getRecords':  runner.getRecords(); break;
+      case 'getStats':    runner.getStats(); break;
+      case 'addRecord':   runner.addRecord(params.data); break;
+      case 'updateRecord':runner.updateRecord(params.clientId, params.updates); break;
+      case 'deleteRecord':runner.deleteRecord(params.clientId); break;
+    }
+  } else {
+    // ── Running from GitHub Pages — call Apps Script as API ──
+    const url = new URL(GAS_URL);
+    url.searchParams.set('action', action);
+
+    // Simple params (login, delete)
+    if (params.email)    url.searchParams.set('email',    params.email);
+    if (params.password) url.searchParams.set('password', params.password);
+    if (params.clientId) url.searchParams.set('clientId', params.clientId);
+
+    // Complex params (add/update — JSON encoded)
+    if (params.data)    url.searchParams.set('data',    encodeURIComponent(JSON.stringify(params.data)));
+    if (params.updates) url.searchParams.set('updates', encodeURIComponent(JSON.stringify(params.updates)));
+
+    fetch(url.toString())
+      .then(r => {
+        if (!r.ok) throw new Error('Network error: ' + r.status);
+        return r.json();
+      })
+      .then(onSuccess)
+      .catch(onError);
+  }
+}
+
 let currentUser = null;
 let allRecords  = [];
 let updateTarget = { clientId: null, dept: null };
@@ -592,15 +643,12 @@ function doLogin() {
   document.getElementById('loginError').textContent = '';
   if (!email || !pass) { document.getElementById('loginError').textContent = 'Please enter email and password.'; return; }
   showLoader();
-  google.script.run
-    .withSuccessHandler(res => {
-      hideLoader();
-      if (!res.success) { document.getElementById('loginError').textContent = res.message; return; }
-      currentUser = res;
-      initApp();
-    })
-    .withFailureHandler(err => { hideLoader(); document.getElementById('loginError').textContent = 'Login failed. Try again.'; })
-    .login(email, pass);
+  gasCall('login', { email, password: pass }, res => {
+    hideLoader();
+    if (!res.success) { document.getElementById('loginError').textContent = res.message; return; }
+    currentUser = res;
+    initApp();
+  }, () => { hideLoader(); document.getElementById('loginError').textContent = 'Login failed. Try again.'; });
 }
 
 function doLogout() {
@@ -659,22 +707,20 @@ function showPage(pageId) {
 // ─── LOAD DATA ─────────────────────────────────────
 function fetchRecords(callback) {
   showLoader();
-  google.script.run
-    .withSuccessHandler(records => { allRecords = records; hideLoader(); callback(records); })
-    .withFailureHandler(() => { hideLoader(); showToast('Failed to load records.','error'); })
-    .getRecords();
+  gasCall('getRecords', {}, records => {
+    allRecords = records;
+    hideLoader();
+    callback(records);
+  });
 }
 
 // ─── ADMIN DASHBOARD ───────────────────────────────
 function loadAdminData() {
   showLoader();
-  google.script.run
-    .withSuccessHandler(stats => {
-      renderAdminStats(stats);
-      hideLoader();
-    })
-    .withFailureHandler(() => { hideLoader(); showToast('Failed to load stats.','error'); })
-    .getStats();
+  gasCall('getStats', {}, stats => {
+    renderAdminStats(stats);
+    hideLoader();
+  });
 
   fetchRecords(records => {
     renderAdminTable(records);
@@ -854,18 +900,15 @@ function submitAddClient() {
     supervisor:  document.getElementById('f_supervisor').value.trim(),
   };
   showLoader();
-  google.script.run
-    .withSuccessHandler(res => {
-      hideLoader();
-      if (res.success) {
-        closeModal('addClientModal');
-        showToast(res.message,'success');
-        clearAddForm();
-        loadDeptPage('account_opening');
-      } else { showToast(res.message,'error'); }
-    })
-    .withFailureHandler(() => { hideLoader(); showToast('Failed to add record.','error'); })
-    .addRecord(formData);
+  gasCall('addRecord', { data: formData }, res => {
+    hideLoader();
+    if (res.success) {
+      closeModal('addClientModal');
+      showToast(res.message,'success');
+      clearAddForm();
+      loadDeptPage('account_opening');
+    } else { showToast(res.message,'error'); }
+  });
 }
 
 function clearAddForm() {
@@ -899,17 +942,14 @@ function submitUpdate() {
     if (el) updates[f.key] = el.value;
   });
   showLoader();
-  google.script.run
-    .withSuccessHandler(res => {
-      hideLoader();
-      if (res.success) {
-        closeModal('updateModal');
-        showToast(res.message,'success');
-        loadDeptPage(dept);
-      } else { showToast(res.message,'error'); }
-    })
-    .withFailureHandler(() => { hideLoader(); showToast('Update failed.','error'); })
-    .updateRecord(clientId, updates);
+  gasCall('updateRecord', { clientId, updates }, res => {
+    hideLoader();
+    if (res.success) {
+      closeModal('updateModal');
+      showToast(res.message,'success');
+      loadDeptPage(dept);
+    } else { showToast(res.message,'error'); }
+  });
 }
 
 // ─── VIEW RECORD (Admin) ───────────────────────────
@@ -945,14 +985,11 @@ function viewRecord(clientId) {
 function deleteRec(clientId) {
   if (!confirm(`Delete client ${clientId}? This cannot be undone.`)) return;
   showLoader();
-  google.script.run
-    .withSuccessHandler(res => {
-      hideLoader();
-      if (res.success) { showToast(res.message,'success'); loadAdminData(); }
-      else showToast(res.message,'error');
-    })
-    .withFailureHandler(() => { hideLoader(); showToast('Delete failed.','error'); })
-    .deleteRecord(clientId);
+  gasCall('deleteRecord', { clientId }, res => {
+    hideLoader();
+    if (res.success) { showToast(res.message,'success'); loadAdminData(); }
+    else showToast(res.message,'error');
+  });
 }
 
 // ─── MODAL HELPERS ─────────────────────────────────
