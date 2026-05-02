@@ -450,6 +450,23 @@ tbody td:first-child{color:var(--text);font-weight:600;font-family:var(--font-mo
   </div>
 </div>
 
+
+<!-- NOTIFICATION PANEL -->
+<div class="notif-bg" id="notifBg" onclick="closeNotifPanel()"></div>
+<div class="notif-panel" id="notifPanel">
+  <div class="notif-panel-hd">
+    <h3>🔔 Notifications</h3>
+    <div class="notif-panel-actions">
+      <button class="notif-mark-all" onclick="markAllRead()">Mark all read</button>
+      <button class="notif-close" onclick="closeNotifPanel()">✕</button>
+    </div>
+  </div>
+  <div class="notif-list" id="notifList">
+    <div class="notif-empty"><div class="e-icon">🔕</div><p>No notifications yet</p></div>
+  </div>
+</div>
+
+
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyNI6twiAIVK2kTdt0YTZJ_3qqR93dwXSk0UfUss6ds1_8nyalBmVVtVFD1z2xLFM1x/exec';
 const IS_GAS  = (typeof google !== 'undefined' && google.script && google.script.run);
@@ -834,20 +851,6 @@ window.addEventListener('load',()=>{
   if(saved&&saved.role&&saved.email){currentUser=saved;initApp();}
 });
 
-<!-- NOTIFICATION PANEL -->
-<div class="notif-bg" id="notifBg" onclick="closeNotifPanel()"></div>
-<div class="notif-panel" id="notifPanel">
-  <div class="notif-panel-hd">
-    <h3>🔔 Notifications</h3>
-    <div class="notif-panel-actions">
-      <button class="notif-mark-all" onclick="markAllRead()">Mark all read</button>
-      <button class="notif-close" onclick="closeNotifPanel()">✕</button>
-    </div>
-  </div>
-  <div class="notif-list" id="notifList">
-    <div class="notif-empty"><div class="e-icon">🔕</div><p>No notifications yet</p></div>
-  </div>
-</div>
 
 </script>
 </body>
