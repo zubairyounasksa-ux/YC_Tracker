@@ -638,8 +638,8 @@ const DEPT_COLS={
   account_opening:{thead:'aoThead',tbody:'aoTbody',cols:['Client ID','Opening Date','Phone Number','Client Email','Account Type','Website Pic','Overseas','Supervisor','Status','Date Updated'],editFields:null},
   broker_admin:{thead:'baThead',tbody:'baTbody',cols:['Client ID','Opening Date','Broker','HNW','Branch ID','Dealer ID','Vouchers','Status'],editFields:[{key:'Broker',label:'Broker Name',type:'text'},{key:'HNW',label:'HNW',type:'select',options:['','Yes','No']},{key:'Branch ID',label:'Branch ID',type:'text'},{key:'Dealer ID',label:'Dealer ID',type:'text'},{key:'Vouchers',label:'Vouchers',type:'text'}],emptyField:'Broker'},
   it_team:{thead:'itThead',tbody:'itTbody',cols:['Client ID','Opening Date','Phone Number','Client Email','Pro Access','Status'],editFields:[{key:'Pro Access',label:'Pro Access',type:'select',options:['','Given','Pending','Not Required']}],emptyField:'Pro Access'},
-  pr_team:{thead:'prThead',tbody:'prTbody',cols:['Client ID','Opening Date','Client Email','Gift Recieved','Status'],editFields:[{key:'Gift Recieved',label:'Gift Received',type:'select',options:['','Given','Not Given','Pending']}],emptyField:'Gift Recieved'},
-  ycsit:{thead:'ycThead',tbody:'ycTbody',cols:['Client ID','Opening Date','Client Email','YCSIT Discount','Status'],editFields:[{key:'YCSIT Discount',label:'YCSIT Discount',type:'select',options:['','Applied','Not Applied','Pending']}],emptyField:'YCSIT Discount'},
+  pr_team:{thead:'prThead',tbody:'prTbody',cols:['Client ID','Opening Date','Phone Number','Client Email','Gift Recieved','Status'],editFields:[{key:'Gift Recieved',label:'Gift Received',type:'select',options:['','Given','Not Given','Pending']}],emptyField:'Gift Recieved'},
+  ycsit:{thead:'ycThead',tbody:'ycTbody',cols:['Client ID','Opening Date','Phone Number','Client Email','YCSIT Discount','Status'],editFields:[{key:'YCSIT Discount',label:'YCSIT Discount',type:'select',options:['','Applied','Not Applied','Pending']}],emptyField:'YCSIT Discount'},
 };
 
 function loadDeptPage(dept){
